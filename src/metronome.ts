@@ -51,7 +51,7 @@ toggleButton.addEventListener('click', () => {
 
 volumeSlider.addEventListener('input', () => {
   if (gainNode) {
-    const volume = parseInt(volumeSlider.value, 10); // Convert slider value to a range between 0 and 1
+    const volume = parseInt(volumeSlider.value, 10) / 100; // Convert slider value to a range between 0 and 1
     gainNode.gain.setValueAtTime(volume, audioContext!.currentTime);
   }
 });
