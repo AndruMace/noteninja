@@ -1,54 +1,56 @@
-import * as THREE from 'three'
+import { runVisualizations } from "./visualizations";
+import { setupNoteDetection } from "./tuner";
 
-let audioFrequencyData: Float32Array = new Float32Array(4096);
-let audioTimeDomainData: Float32Array = new Float32Array(4096);
+export const AUDIO_FREQUENCY_DATA: Float32Array = new Float32Array(4096);
+export const AUDIO_TIME_DOMAIN_DATA: Float32Array = new Float32Array(4096);
 
-const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-
-const renderer = new THREE.WebGLRenderer()
-renderer.setSize(400, 300)
-document.querySelector<HTMLDivElement>('#audioInfoContainer')!.appendChild(renderer.domElement)
-
-const geometry = new THREE.BoxGeometry(1, 1, 1)
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 })
-const cube = new THREE.Mesh(geometry, material)
-scene.add(cube)
-
-camera.position.z = 5
-
-function animate() {
-  requestAnimationFrame(animate)
-
-  cube.rotation.x += 0.1
-  cube.rotation.y += 0.1
-
-  renderer.render(scene, camera)
+interface Audio {
+  context: AudioContext | null;
+  source: MediaStreamAudioSourceNode | null;
+  analyser: AnalyserNode | null;
+  gain: GainNode | null;
+  enabled: boolean;
 }
 
-animate()
+export const AUDIO: Audio = {
+  context: null,
+  source: null,
+  analyser: null,
+  gain: null,
+  enabled: false,
+};
 
-await setupAudio()
+document.getElementById('beginAudioProcessing')!.addEventListener('click', async () => {
+  console.log('click')
+  await startAudio();
+  await setupNoteDetection();
+  runVisualizations();
+});
 
-async function setupAudio() {
+async function startAudio() {
+  AUDIO.enabled = true;
   const stream = await navigator.mediaDevices.getUserMedia({ 
     audio: { 
       echoCancellation: false,
       noiseSuppression: false,
-      autoGainControl: true
+      autoGainControl: false
     } 
   });
-  const audioContext = new AudioContext();
-  const source = audioContext.createMediaStreamSource(stream);
+  if (!AUDIO.context) AUDIO.context = new AudioContext();
+  AUDIO.source = AUDIO.context.createMediaStreamSource(stream);
+  AUDIO.analyser = AUDIO.context.createAnalyser();
+  AUDIO.analyser.fftSize = 4096; // Larger FFT for better resolution
+  AUDIO.analyser.smoothingTimeConstant = 0.75; // Reduced smoothing for faster response
+  AUDIO.analyser.minDecibels = -80;
+  AUDIO.analyser.maxDecibels = -20;
   
-  const analyser = audioContext.createAnalyser();
-  analyser.fftSize = 4096; // Larger FFT for better resolution
-  analyser.smoothingTimeConstant = 0.75; // Reduced smoothing for faster response
-  analyser.minDecibels = -80;
-  analyser.maxDecibels = -20;
-  
-  source.connect(analyser); 
+  AUDIO.source.connect(AUDIO.analyser);
 
-  analyser.getFloatFrequencyData(audioFrequencyData);
-  analyser.getFloatTimeDomainData(audioTimeDomainData);
+  function monitorAudio() {
+    if (!AUDIO.analyser) return;
+    AUDIO.analyser.getFloatFrequencyData(AUDIO_FREQUENCY_DATA);
+    AUDIO.analyser.getFloatTimeDomainData(AUDIO_TIME_DOMAIN_DATA);
+    requestAnimationFrame(monitorAudio);
+  }
+  monitorAudio();
 }

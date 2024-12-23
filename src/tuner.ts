@@ -1,3 +1,5 @@
+import { AUDIO, AUDIO_FREQUENCY_DATA } from './audio';
+
 // Frequency ranges for guitar strings (in Hz)
 const NOTES = {
     // 2nd Octave (thick E string open)
@@ -62,8 +64,6 @@ const NOTES = {
 
 function detectNote(analyserNode: AnalyserNode) {
     const bufferLength = analyserNode.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyserNode.getFloatFrequencyData(dataArray);
     
     const sampleRate = analyserNode.context.sampleRate;
     const frequencyResolution = sampleRate / (2 * bufferLength);
@@ -74,16 +74,16 @@ function detectNote(analyserNode: AnalyserNode) {
     // Find peaks above noise threshold
     const peaks = [];
     for (let i = 2; i < bufferLength - 2; i++) {
-        if (dataArray[i] > NOISE_THRESHOLD &&
-            dataArray[i] > dataArray[i - 1] &&
-            dataArray[i] > dataArray[i - 2] &&
-            dataArray[i] > dataArray[i + 1] &&
-            dataArray[i] > dataArray[i + 2]) {
+        if (AUDIO_FREQUENCY_DATA[i] > NOISE_THRESHOLD &&
+            AUDIO_FREQUENCY_DATA[i] > AUDIO_FREQUENCY_DATA[i - 1] &&
+            AUDIO_FREQUENCY_DATA[i] > AUDIO_FREQUENCY_DATA[i - 2] &&
+            AUDIO_FREQUENCY_DATA[i] > AUDIO_FREQUENCY_DATA[i + 1] &&
+            AUDIO_FREQUENCY_DATA[i] > AUDIO_FREQUENCY_DATA[i + 2]) {
             
             // Quadratic interpolation for more precise frequency estimation
-            const alpha = dataArray[i - 1];
-            const beta = dataArray[i];
-            const gamma = dataArray[i + 1];
+            const alpha = AUDIO_FREQUENCY_DATA[i - 1];
+            const beta = AUDIO_FREQUENCY_DATA[i];
+            const gamma = AUDIO_FREQUENCY_DATA[i + 1];
             const peakOffset = 0.5 * (alpha - gamma) / (alpha - 2*beta + gamma);
             const interpolatedBin = i + peakOffset;
             
@@ -91,7 +91,7 @@ function detectNote(analyserNode: AnalyserNode) {
                 frequency: interpolatedBin * frequencyResolution,
                 amplitude: beta,
                 // Clarity measure: how much stronger is this peak compared to neighbors
-                clarity: beta - Math.max(dataArray[i-2], dataArray[i+2])
+                clarity: beta - Math.max(AUDIO_FREQUENCY_DATA[i-2], AUDIO_FREQUENCY_DATA[i+2])
             });
         }
     }
@@ -141,27 +141,16 @@ function detectNote(analyserNode: AnalyserNode) {
     };
 }
 
-async function setupNoteDetection() {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: { 
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: true
-        } 
-    });
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 4096; // Larger FFT for better resolution
-    analyser.smoothingTimeConstant = 0.75; // Reduced smoothing for faster response
-    analyser.minDecibels = -80;
-    analyser.maxDecibels = -20;
-    
-    source.connect(analyser);
+export async function setupNoteDetection() {
+    if (!AUDIO.enabled) return;
     
     function detect() {
-        const result = detectNote(analyser);
+        if (!AUDIO.analyser) {
+            console.log("No analyser")
+            return
+        };
+
+        const result = detectNote(AUDIO.analyser);
         if (result && result.confidence > 40) {  // Only show confident detections
             document.querySelector<HTMLSpanElement>('#detectedNote')!.innerHTML = 
             `Detected Note: ${result.note}\n
@@ -179,5 +168,3 @@ async function setupNoteDetection() {
     
     detect();
 }
-
-setupNoteDetection();
