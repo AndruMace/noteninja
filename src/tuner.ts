@@ -141,8 +141,12 @@ function detectNote(analyserNode: AnalyserNode) {
     };
 }
 
+
 export async function setupNoteDetection() {
-    if (!AUDIO.enabled) return;
+    if (!AUDIO.enabled) {
+        console.log("No audio Audio not enabled")
+        return;
+    };
     
     function detect() {
         if (!AUDIO.analyser) {
@@ -151,7 +155,7 @@ export async function setupNoteDetection() {
         };
 
         const result = detectNote(AUDIO.analyser);
-        if (result && result.confidence > 40) {  // Only show confident detections
+        if (result && result.confidence > 2) {  // Only show confident detections
             document.querySelector<HTMLSpanElement>('#detectedNote')!.innerHTML = 
             `Detected Note: ${result.note}\n
             Frequency: ${result.frequency.toFixed(1)}Hz

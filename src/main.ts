@@ -35,8 +35,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = /*html*/`
       <div class="container" id="audioInfoContainer">\
         <button id="beginAudioProcessing">Begin Audio Processing</button>
       </div>
-      <div class="container" id="gameContainer">
-      </div>
     </div>
   </div>
 `

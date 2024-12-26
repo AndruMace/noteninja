@@ -19,9 +19,10 @@ export const AUDIO: Audio = {
   gain: null,
   enabled: false,
 };
+runVisualizations();
 
 document.getElementById('beginAudioProcessing')!.addEventListener('click', async () => {
-  console.log('click')
+  console.log("Begin Audio Processing");
   await startAudio();
   await setupNoteDetection();
   runVisualizations();
