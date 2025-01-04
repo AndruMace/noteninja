@@ -43,7 +43,7 @@ async function startAudio() {
   AUDIO.analyser.fftSize = 4096; // Larger FFT for better resolution
   AUDIO.analyser.smoothingTimeConstant = 0.75; // Reduced smoothing for faster response
   AUDIO.analyser.minDecibels = -80;
-  AUDIO.analyser.maxDecibels = -20;
+  AUDIO.analyser.maxDecibels = -0;
   
   AUDIO.source.connect(AUDIO.analyser);
 
