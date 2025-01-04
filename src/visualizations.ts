@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { AUDIO_TIME_DOMAIN_DATA, AUDIO } from './audio';
-// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export function runVisualizations() {
     if (AUDIO.enabled) {
