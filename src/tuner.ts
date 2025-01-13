@@ -62,19 +62,30 @@ const NOTES = {
     'E6': 1318.51
 };
 
+interface TunerParams {
+    noiseThreshold: number;
+    minClarity: number;
+    minFrequency: number;
+    maxFrequency: number;
+}
+
+const TUNER_PARAMS: TunerParams = {
+    noiseThreshold: -75,
+    minClarity: 10,
+    minFrequency: 70,
+    maxFrequency: 500,
+}
+
 function detectNote(analyserNode: AnalyserNode) {
     const bufferLength = analyserNode.frequencyBinCount;
     
     const sampleRate = analyserNode.context.sampleRate;
     const frequencyResolution = sampleRate / (2 * bufferLength);
     
-    // Noise floor threshold (adjust based on your environment)
-    const NOISE_THRESHOLD = -75;
-    
     // Find peaks above noise threshold
     const peaks = [];
     for (let i = 2; i < bufferLength - 2; i++) {
-        if (AUDIO_FREQUENCY_DATA[i] > NOISE_THRESHOLD &&
+        if (AUDIO_FREQUENCY_DATA[i] > TUNER_PARAMS.noiseThreshold &&
             AUDIO_FREQUENCY_DATA[i] > AUDIO_FREQUENCY_DATA[i - 1] &&
             AUDIO_FREQUENCY_DATA[i] > AUDIO_FREQUENCY_DATA[i - 2] &&
             AUDIO_FREQUENCY_DATA[i] > AUDIO_FREQUENCY_DATA[i + 1] &&
@@ -96,12 +107,12 @@ function detectNote(analyserNode: AnalyserNode) {
         }
     }
     
-    // Sort peaks by amplitude and take the strongest that's in guitar range
+    // Sort peaks by amplitude and take the strongest that's in range
     peaks.sort((a, b) => b.amplitude - a.amplitude);
     const validPeaks = peaks.filter(peak => 
-        peak.frequency >= 70 && // Lowest guitar note (E2)
-        peak.frequency <= 500 && // Highest note we care about (E4) <-- no longer true I increased it but reference in case it doesn't work
-        peak.clarity > 10 // Minimum peak prominence
+        peak.frequency >= TUNER_PARAMS.minFrequency && 
+        peak.frequency <= TUNER_PARAMS.maxFrequency && 
+        peak.clarity > TUNER_PARAMS.minClarity
     );
     
     if (validPeaks.length === 0) {
@@ -141,7 +152,6 @@ function detectNote(analyserNode: AnalyserNode) {
     };
 }
 
-
 export async function setupNoteDetection() {
     if (!AUDIO.enabled) {
         console.log("No audio Audio not enabled")
@@ -160,11 +170,13 @@ export async function setupNoteDetection() {
             `Detected Note: ${result.note}\n
             Frequency: ${result.frequency.toFixed(1)}Hz
             `;
+            AUDIO.playedNotes.push(result.note as string);
             console.log(
                 `Note: ${result.note} | ` +
                 `Freq: ${result.frequency.toFixed(1)}Hz | ` +
                 `Cents off: ${result.cents.toFixed(1)} | ` +
-                `Confidence: ${result.confidence.toFixed(1)}%`
+                `Confidence: ${result.confidence.toFixed(1)}% | ` +
+                `Amplitude: ${result.amplitude.toFixed(1)}`
             );
         }
         requestAnimationFrame(detect);

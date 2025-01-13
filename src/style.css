@@ -2,38 +2,34 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  color: white;
+}
+
+input {
+  color: black;
 }
 
 body {
-  background-color: beige;
+  background-color: rgb(35, 35, 49);
+  
 }
 
 button {
   border: 0;
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 3px;
+  background-color: rgb(69, 255, 227);
+  color: black;
+  padding: 6px;
   border-radius: 10px;
 }
 
 button:active {
-  transform: scale(0.8);
+  transform: scale(0.9);
 }
 
 button:hover {
-  background-color: rgba(0, 0, 0, 0.4);
   cursor: pointer;
   border: 1px solid blue;
-  padding: 2px
-}
-
-button
-
-.app {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+  padding: 7px
 }
 
 .controlBar {
@@ -46,14 +42,6 @@ button
   padding: 5px;
 }
 
-/* Style the main container such that the child elements appear in a 2x2 grid */
-.mainContainer {
-  padding: 20px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 50px;
-}
 
 .container {
   display: flex;
@@ -61,8 +49,6 @@ button
   align-items: center;
   justify-content: center;
   padding: 10px;
-  width: 1080px;
-  height: 900px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
